@@ -24,6 +24,10 @@ module OTerm
       end
     end
 
+    def shutdown()
+      @acceptThread.exit()
+    end
+
     def remove_listener(listener)
       @listeners.delete(listener)
     end

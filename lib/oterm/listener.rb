@@ -18,9 +18,11 @@ module OTerm
       @con = con
       @executor = executor
       @buf = ""
+      @kill_buf = nil
       @history = []
       @hp = 0
       @out = Output.new(con)
+      @col = 0
       @echo = false
       @done = false
 
@@ -54,6 +56,7 @@ module OTerm
             if 0 == cmd.size()
               @out.pl()
               @out.prompt()
+              @col = 0
               next
             end
             @buf = ""
@@ -61,6 +64,7 @@ module OTerm
             @history << cmd if 0 < cmd.size() && (0 == @history.size() || @history[-1] != cmd)
             executor.execute(cmd, self)
             @out.prompt()
+            @col = 0
           when 0..12, 14..26, 28..31, 127 # other control character
             process_ctrl_cmd(o0)
           when 63 # ?
@@ -70,9 +74,9 @@ module OTerm
           else
             if 1 == len || (2 == len && "\000" == line[1]) # single char mode
               @hp = 0
-              @out.pc(line[0])
-              @buf << line[0]
+              insert(line[0])
             else # line mode
+              # TBD
             end
           end
         rescue Exception => e
@@ -80,6 +84,10 @@ module OTerm
           puts "** #{e.class}: #{e.message}"
         end
       end
+    end
+
+    def close()
+      @done = true
     end
 
     def process_telnet_cmd(line)
@@ -112,24 +120,40 @@ module OTerm
 
     def process_ctrl_cmd(o)
       case o
-      when 4
-        @con.close()
-        @done = true
+      when 1 # ^a
+        move_col(-@col)
+      when 2 # ^b
+        move_col(-1)
+      when 4 # ^d
+        @hp = 0
+        if @col < @buf.size 
+          @col += 1
+          delete_char()
+        end
+      when 5 # ^e
+        move_col(@buf.size() - @col)
+      when 6 # ^f
+        move_col(1)
       when 8, 127 # backspace or delete
         @hp = 0
-        if 0 < @buf.size()
-          @buf.chop!()
-          @out.p("\x08 \x08")
-        end
+        delete_char()
       when 9 # tab
         @hp = 0
         # TBD completions
+      when 11 # ^k
+        @hp = 0
+        if @col < @buf.size()
+          @kill_buf = @buf[@col..-1]
+          blen = @buf.size()
+          @buf = @buf[0...@col]
+          update_cmd(blen)
+        end
       when 14 # ^n
         if 0 < @hp && @hp <= @history.size()
           @hp -= 1
           blen = @buf.size()
           if 0 == @hp
-            @buf = ""
+            @buf = ''
           else
             @buf = @history[-@hp]
           end
@@ -142,6 +166,11 @@ module OTerm
           @buf = @history[-@hp]
           update_cmd(blen)
         end
+      when 21 # ^u
+        @hp -= 1
+        @buf = ''
+      when 25 # ^y
+        insert(@kill_buf)
       end
     end
 
@@ -154,6 +183,66 @@ module OTerm
         dif = blen - @buf.size()
         @out.p(' ' * dif + "\b" * dif)
       end
+      @col = @buf.size
+    end
+
+    def move_col(dif)
+      if 0 > dif
+        while 0 > dif && 0 < @col
+          @col -= 1
+          @out.p("\b")
+          dif += 1
+        end
+      else
+        max = @buf.size
+        while 0 < dif && @col <= max
+          @out.p(@buf[@col])
+          @col += 1
+          dif -= 1
+        end
+      end
+    end
+
+    def insert(str)
+      # TBD be smarter with vt100
+      if 0 == @col
+        @buf = str + @buf
+        @out.p("\r")
+        @out.prompt()
+        @out.p(@buf)
+        @out.p("\r")
+        @out.prompt()
+        @out.p(@buf[0...str.size])
+      elsif @buf.size == @col
+        @buf << str
+        @out.pc(str)
+      else
+        @buf = @buf[0...@col] + str + @buf[@col..-1]
+        @out.p("\r")
+        @out.prompt()
+        @out.p(@buf)
+        @out.p("\r")
+        @out.prompt()
+        @out.p(@buf[0...@col + str.size])
+      end
+      @col += str.size
+    end
+
+    def delete_char()
+      return if 0 == @col || 0 == @buf.size
+      if @buf.size == @col
+        @buf.chop!()
+        @out.p("\x08 \x08")
+      else
+        @buf = @buf[0...@col - 1] + @buf[@col..-1]
+        @out.p("\r")
+        @out.prompt()
+        @out.p(@buf)
+        @out.p(" \r")
+        @out.prompt()
+        @out.p(@buf[0...@col - 1])
+      end
+      @col -= 1
     end
 
   end # Listener
