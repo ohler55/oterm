@@ -1,0 +1,6 @@
+rvm:
+  - 2.0.0
+
+script:
+  - gem build oterm.gemspec
+  - gem install oterm-*
