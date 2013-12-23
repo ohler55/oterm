@@ -26,6 +26,7 @@ class Ex < OTerm::Executor
 
   def box(listener, args)
     o = listener.out
+    # TBD get values for x, h, and w from args
     x = 20
     h = 4
     w = 20
@@ -36,7 +37,10 @@ class Ex < OTerm::Executor
     o.set_colors(OTerm::VT100::RED, nil)
     o.frame(cy - h, x, h, w)
     o.restore_cursor()
-    puts "*** screen size: #{o.screen_size}"
+  end
+
+  def missing(cmd, listener)
+    listerner.out.pl("'#{cmd}' is not a recognized command.")
   end
 
 end # Ex

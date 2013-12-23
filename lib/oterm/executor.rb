@@ -58,6 +58,9 @@ module OTerm
       listener.server.shutdown()
     end
 
+    # This evaluates cmd as a Ruby expression. This is great for debugging but
+    # not a wise move for a public interface. To hide this just create a methid
+    # with the same name in the subclass of this one.
     def missing(cmd, listener)
       begin
         result = "#{eval(cmd)}".split("\n")
