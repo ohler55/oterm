@@ -13,8 +13,30 @@ require 'oterm'
 
 class Ex < OTerm::Executor
 
+  def initialize()
+    super()
+    register('box', self, :box, 'draws a box',
+             %|Draws a box at the location described with the dimensions given.
+> box <inset> <height> <width>|)
+  end
+
   def greeting()
     "Hello!"
+  end
+
+  def box(listener, args)
+    o = listener.out
+    x = 20
+    h = 4
+    w = 20
+    cy, _ = o.get_cursor()
+    (h - cy + 1).times { listener.out.pl() } if cy <= h
+    cy, _ = o.get_cursor()
+    o.save_cursor()
+    o.set_colors(OTerm::VT100::RED, nil)
+    o.frame(cy - h, x, h, w)
+    o.restore_cursor()
+    puts "*** screen size: #{o.screen_size}"
   end
 
 end # Ex

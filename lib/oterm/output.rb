@@ -1,15 +1,13 @@
 
 module OTerm
 
-  class Output
-    attr_accessor :con
-
+  class Output < VT100
     def initialize(con)
-      @con = con
+      super(con)
     end
 
     def prompt()
-      @con.print('> ')
+      @con.print("\r> ")
     end
 
     def p(str)

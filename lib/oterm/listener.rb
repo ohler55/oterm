@@ -17,7 +17,7 @@ module OTerm
       @server = server
       @con = con
       @executor = executor
-      @buf = ""
+      @buf = ''
       @kill_buf = nil
       @history = []
       @hp = 0
@@ -39,9 +39,9 @@ module OTerm
           len = line.size()
           break if 0 == len
           if @debug
-            # TBD better display of line with hex, length, and ascii with control characters replaced
             line.each_byte { |x| print("#{x} ") }
-            puts "[#{line.size()}]"
+            plain = line.gsub(/./) { |c| c.ord < 32 || 127 <= c.ord  ? '*' : c }
+            puts "[#{line.size()}] #{plain}"
           end
           # determine input type (telnet command, char mode, line mode)
           o0 = line[0].ord()
@@ -51,37 +51,20 @@ module OTerm
           when 27 # escape, vt100 sequence
             vt100_cmd(line)
           when 13 # new line
-            @hp = 0
-            cmd = buf.strip()
-            if 0 == cmd.size()
-              @out.pl()
-              @out.prompt()
-              @col = 0
-              next
-            end
-            @buf = ""
-            @out.pl()
-            @history << cmd if 0 < cmd.size() && (0 == @history.size() || @history[-1] != cmd)
-            executor.execute(cmd, self)
-            @out.prompt()
-            @col = 0
+            exec_cmd(@buf)
           when 0..12, 14..26, 28..31, 127 # other control character
             process_ctrl_cmd(o0)
-          when 63 # ?
-            @hp = 0
-            @executor.help(self)
-            update_cmd(0)
           else
             if 1 == len || (2 == len && "\000" == line[1]) # single char mode
               @hp = 0
               insert(line[0])
             else # line mode
-              # TBD
+              exec_cmd(line)
             end
           end
         rescue Exception => e
-          # TBD change to output to a logger instead
-          puts "** #{e.class}: #{e.message}"
+          puts "#{e.class}: #{e.message}"
+          e.backtrace.each { |bline| puts '  ' + bline }
         end
       end
     end
@@ -112,10 +95,34 @@ module OTerm
           end
         end
       end
-      @con.print(reply) if 0 < reply.size
+      if 0 < reply.size
+        @con.print(reply)
+      else
+        # Done negotiating with telnet. Initiate negotiation for vt100 ANSI support.
+        @out.identify()
+      end
     end
 
     def vt100_cmd(line)
+      puts "*** vt100 command"
+      # TBD
+    end
+
+    def exec_cmd(cmd)
+      @hp = 0
+      cmd.strip!()
+      if 0 == cmd.size()
+        @out.pl()
+        @out.prompt()
+        @col = 0
+        return
+      end
+      @buf = ""
+      @out.pl()
+      @history << cmd if 0 < cmd.size() && (0 == @history.size() || @history[-1] != cmd)
+      executor.execute(cmd, self)
+      @out.prompt()
+      @col = 0
     end
 
     def process_ctrl_cmd(o)
@@ -139,7 +146,7 @@ module OTerm
         delete_char()
       when 9 # tab
         @hp = 0
-        # TBD completions
+        @executor.tab(@buf, self)
       when 11 # ^k
         @hp = 0
         if @col < @buf.size()
@@ -195,7 +202,7 @@ module OTerm
         end
       else
         max = @buf.size
-        while 0 < dif && @col <= max
+        while 0 < dif && @col < max
           @out.p(@buf[@col])
           @col += 1
           dif -= 1
@@ -213,9 +220,10 @@ module OTerm
         @out.p("\r")
         @out.prompt()
         @out.p(@buf[0...str.size])
-      elsif @buf.size == @col
+      elsif @buf.size <= @col
         @buf << str
         @out.pc(str)
+        @col = @buf.size
       else
         @buf = @buf[0...@col] + str + @buf[@col..-1]
         @out.p("\r")
@@ -230,7 +238,7 @@ module OTerm
 
     def delete_char()
       return if 0 == @col || 0 == @buf.size
-      if @buf.size == @col
+      if @buf.size <= @col
         @buf.chop!()
         @out.p("\x08 \x08")
       else

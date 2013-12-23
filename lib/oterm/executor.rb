@@ -21,7 +21,7 @@ module OTerm
       name, args = cmd.split(' ', 2)
       c = @cmds[name]
       if nil == c
-        listener.out.pl("#{name} is not a valid command")
+        missing(cmd, listener)
         return
       end
       c.target.send(c.op, listener, args)
@@ -44,7 +44,7 @@ module OTerm
         max = name.size if max < name.size
       end
       @cmds.each do |name,cmd|
-        listener.out.pl("  %1$*2$s - %3$s" % [name, -max, cmd.desc])
+        listener.out.pl("  %1$*2$s - %3$s" % [name, -max, cmd.summary])
       end
     end
 
@@ -56,6 +56,40 @@ module OTerm
     def shutdown(listener, args)
       listener.out.pl("Shutting down")
       listener.server.shutdown()
+    end
+
+    def missing(cmd, listener)
+      begin
+        result = "#{eval(cmd)}".split("\n")
+      rescue Exception => e
+        result = ["#{e.class}: #{e.message}"]
+        e.backtrace.each do |line|
+          break if line.include?('oterm/executor.rb')
+          result << "\t" + line
+        end
+      end
+      result.each do |line|
+        listener.out.pl(line)
+      end
+    end
+
+    def tab(cmd, listener)
+      comp = []
+      @cmds.each_key do |name|
+        comp << name if name.start_with?(cmd)
+      end
+      if 1 == comp.size
+        listener.move_col(1000)
+        listener.insert(comp[0][listener.buf.size..-1])
+        listener.out.prompt()
+        listener.out.p(listener.buf)
+      else
+        listener.out.pl()
+        comp.each do |name|
+          listener.out.pl(name)
+        end
+        listener.update_cmd(0)
+      end
     end
 
     def register(cmd, target, op, summary, desc)
