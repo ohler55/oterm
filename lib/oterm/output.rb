@@ -7,7 +7,9 @@ module OTerm
     end
 
     def prompt()
+      dim()
       @con.print("\r> ")
+      attrs_off()
     end
 
     def p(str)

@@ -27,7 +27,7 @@ module OTerm
       @done = false
 
       greeting = executor.greeting()
-      @out.pl(greeting) if nil != greeting
+      @out.pl(greeting) unless greeting.nil?
 
       # initiate negotiations for single character mode and no echo
       @out.p(Telnet.msg(Telnet::DO, Telnet::SGA) + Telnet.msg(Telnet::DO, Telnet::ECHO))
@@ -104,8 +104,8 @@ module OTerm
     end
 
     def vt100_cmd(line)
+      # Should not get here.
       puts "*** vt100 command"
-      # TBD
     end
 
     def exec_cmd(cmd)

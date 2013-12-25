@@ -39,13 +39,15 @@ class Ex < OTerm::Executor
     o.restore_cursor()
   end
 
+=begin
   def missing(cmd, listener)
-    listerner.out.pl("'#{cmd}' is not a recognized command.")
+    listener.out.pl("'#{cmd}' is not a recognized command.")
   end
+=end
 
 end # Ex
 
 executor = Ex.new()
 
 server = OTerm::Server.new(executor, 6060, true)
-server.acceptThread.join()
+server.join()

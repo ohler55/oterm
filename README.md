@@ -35,7 +35,7 @@ soon in the ODisk application and later in a more interesting project.
 
 *RubyGems* *repo*: https://rubygems.org/gems/oterm
 
-Follow [@peterohler on Twitter](http://twitter.com/#!/peterohler) for announcements and news about the Oj gem.
+Follow [@peterohler on Twitter](http://twitter.com/#!/peterohler) for announcements and news about the OTerm gem.
 
 ## <a name="build_status">Build Status</a>
 

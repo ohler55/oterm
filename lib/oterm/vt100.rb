@@ -3,7 +3,7 @@ module OTerm
 
   class VT100
     ESC = 27.chr
-    MAX_DIM = 10000
+    MAX_DIM = 9999
 
     # graphic font characters
     BLANK = '_'
@@ -140,7 +140,6 @@ module OTerm
     def bold()
       @con.print("\x1b[1m") if @is_vt100
     end
-    alias bright bold
 
     def dim()
       @con.print("\x1b[2m") if @is_vt100
@@ -156,6 +155,10 @@ module OTerm
 
     def reverse()
       @con.print("\x1b[7m") if @is_vt100
+    end
+
+    def invisible()
+      @con.print("\x1b[8m") if @is_vt100
     end
 
     def big_top()

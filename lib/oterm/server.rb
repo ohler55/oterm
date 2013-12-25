@@ -32,5 +32,9 @@ module OTerm
       @listeners.delete(listener)
     end
 
+    def join()
+      @acceptThread.join()
+    end
+
   end # Server
 end # OTerm

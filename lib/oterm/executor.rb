@@ -20,7 +20,7 @@ module OTerm
     def execute(cmd, listener)
       name, args = cmd.split(' ', 2)
       c = @cmds[name]
-      if nil == c
+      if c.nil?
         missing(cmd, listener)
         return
       end
@@ -29,9 +29,9 @@ module OTerm
 
     def help(listener, arg=nil)
       listener.out.pl()
-      if nil != arg
+      if !arg.nil?
         c = @cmds[arg]
-        if nil != c
+        if !c.nil?
           listener.out.pl("#{arg} - #{c.summary}")
           c.desc.each do |line|
             listener.out.pl("  #{line}")
@@ -81,6 +81,8 @@ module OTerm
       @cmds.each_key do |name|
         comp << name if name.start_with?(cmd)
       end
+      return if 0 == comp.size
+
       if 1 == comp.size
         listener.move_col(1000)
         listener.insert(comp[0][listener.buf.size..-1])
@@ -91,12 +93,34 @@ module OTerm
         comp.each do |name|
           listener.out.pl(name)
         end
-        listener.update_cmd(0)
+        best = best_completion(cmd, comp)
+        if best == cmd
+          listener.update_cmd(0)
+        else
+          listener.move_col(1000)
+          listener.insert(best[listener.buf.size..-1])
+          listener.out.prompt()
+          listener.out.p(listener.buf)
+        end
       end
     end
 
     def register(cmd, target, op, summary, desc)
       @cmds[cmd] = Cmd.new(target, op, summary, desc)
+    end
+
+    def best_completion(pre, names)
+      plen = pre.size
+      target = names[0]
+      names = names[1..-1]
+      for i in plen..target.size
+        c = target[i]
+        names.each do |n|
+          return pre unless c == n[i]
+        end
+        pre << c
+      end
+      pre
     end
 
     class Cmd
@@ -109,7 +133,11 @@ module OTerm
         @target = target
         @op = op
         @summary = summary
-        @desc = desc.split("\n")
+        if desc.nil?
+          @desc = summary
+        else
+          @desc = desc.split("\n")
+        end
       end
     end # Cmd
 
