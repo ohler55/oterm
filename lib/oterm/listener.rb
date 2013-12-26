@@ -33,7 +33,7 @@ module OTerm
       @out.p(Telnet.msg(Telnet::DO, Telnet::SGA) + Telnet.msg(Telnet::DO, Telnet::ECHO))
 
       out.prompt()
-      while !@done
+      until @done
         line = con.recv(100)
         begin
           len = line.size()
@@ -104,8 +104,19 @@ module OTerm
     end
 
     def vt100_cmd(line)
-      # Should not get here.
-      puts "*** vt100 command"
+      # Possible arrow key.
+      if 3 == line.size() && '[' == line[1]
+        case line[2]
+        when 'A' # up arrow
+          history_back()
+        when 'B' # down arrow
+          history_forward()
+        when 'C' # right arrow
+          move_col(1)
+        when 'D' # left arrow
+          move_col(-1)
+        end
+      end
     end
 
     def exec_cmd(cmd)
@@ -156,23 +167,9 @@ module OTerm
           update_cmd(blen)
         end
       when 14 # ^n
-        if 0 < @hp && @hp <= @history.size()
-          @hp -= 1
-          blen = @buf.size()
-          if 0 == @hp
-            @buf = ''
-          else
-            @buf = @history[-@hp]
-          end
-          update_cmd(blen)
-        end
+        history_forward()
       when 16 # ^p
-        if @hp < @history.size()
-          @hp += 1
-          blen = @buf.size()
-          @buf = @history[-@hp]
-          update_cmd(blen)
-        end
+        history_back()
       when 21 # ^u
         @hp -= 1
         @buf = ''
@@ -207,6 +204,28 @@ module OTerm
           @col += 1
           dif -= 1
         end
+      end
+    end
+
+    def history_back()
+      if @hp < @history.size()
+        @hp += 1
+        blen = @buf.size()
+        @buf = @history[-@hp]
+        update_cmd(blen)
+      end
+    end
+
+    def history_forward()
+      if 0 < @hp && @hp <= @history.size()
+        @hp -= 1
+        blen = @buf.size()
+        if 0 == @hp
+          @buf = ''
+        else
+          @buf = @history[-@hp]
+        end
+        update_cmd(blen)
       end
     end
 
