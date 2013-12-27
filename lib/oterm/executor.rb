@@ -111,6 +111,8 @@ module OTerm
 
     def best_completion(pre, names)
       plen = pre.size
+      # Must make a copy as pre is not frozen.
+      pre = String.new(pre)
       target = names[0]
       names = names[1..-1]
       for i in plen..target.size
