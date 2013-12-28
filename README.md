@@ -41,6 +41,12 @@ Follow [@peterohler on Twitter](http://twitter.com/#!/peterohler) for announceme
 
 [![Build Status](https://secure.travis-ci.org/ohler55/oterm.png?branch=master)](http://travis-ci.org/ohler55/oterm)
 
+### Current Release 1.0.1 - December 27, 2013
+
+ - Improved completion handling
+
+ - Fixed some bugs
+
 ### Current Release 1.0.0 - December 22, 2013
 
  - First release. There will be rough edges.
