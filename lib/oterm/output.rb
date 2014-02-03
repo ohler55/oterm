@@ -13,6 +13,7 @@ module OTerm
     end
 
     def p(str)
+      str = str.gsub("\n", "\n\r")
       @con.print(str)
     end
 
@@ -21,6 +22,7 @@ module OTerm
     end
 
     def pl(line='')
+      line = line.gsub("\n", "\n\r")
       @con.puts(line + "\r")
     end
 

@@ -11,6 +11,8 @@ module OTerm
                %|Shuts down the application.|)
       register('close', self, :close, 'closes the connection',
                %|Closes the connection to the application.|)
+      register('history', self, :history, 'shows command history',
+               %|Shows history of commands..|)
     end
 
     def greeting()
@@ -56,6 +58,14 @@ module OTerm
     def shutdown(listener, args)
       listener.out.pl("Shutting down")
       listener.server.shutdown()
+    end
+
+    def history(listener, args)
+      i = 1
+      listener.history.each do |cmd|
+        listener.out.pl("%3d: %s" % [i, cmd])
+        i += 1
+      end
     end
 
     # This evaluates cmd as a Ruby expression. This is great for debugging but

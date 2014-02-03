@@ -13,7 +13,6 @@ module OTerm
     attr_accessor :debug
 
     def initialize(server, con, executor)
-      @debug = server.debug()
       @server = server
       @con = con
       @executor = executor
@@ -38,7 +37,7 @@ module OTerm
         begin
           len = line.size()
           break if 0 == len
-          if @debug
+          if server.debug()
             line.each_byte { |x| print("#{x} ") }
             plain = line.gsub(/./) { |c| c.ord < 32 || 127 <= c.ord  ? '*' : c }
             puts "[#{line.size()}] #{plain}"
@@ -55,9 +54,13 @@ module OTerm
           when 0..12, 14..26, 28..31, 127 # other control character
             process_ctrl_cmd(o0)
           else
-            if 1 == len || (2 == len && "\000" == line[1]) # single char mode
+            if 1 == len || (2 == len && "\000" == line[1] || "\r" != line[-1]) # single char mode
               @hp = 0
-              insert(line[0])
+              if "\000" == line[1]
+                insert(line[0])
+              else
+                insert(line)
+              end
             else # line mode
               exec_cmd(line)
             end
@@ -241,7 +244,7 @@ module OTerm
         @out.p(@buf[0...str.size])
       elsif @buf.size <= @col
         @buf << str
-        @out.pc(str)
+        @out.p(str)
         @col = @buf.size
       else
         @buf = @buf[0...@col] + str + @buf[@col..-1]

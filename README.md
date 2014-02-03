@@ -22,14 +22,14 @@ The driver for writing this gem was to be able to control, inspect, and debug
 multi-threaded applications while the application is running. Look for it's use
 soon in the ODisk application and later in a more interesting project.
 
-## <a name="installation">Installation</a>
+## Installation
     gem install oterm
 
-## <a name="documentation">Documentation</a>
+## Documentation
 
 *Documentation*: http://www.ohler.com/oterm
 
-## <a name="source">Source</a>
+## Source
 
 *GitHub* *repo*: https://github.com/ohler55/oterm
 
@@ -37,9 +37,13 @@ soon in the ODisk application and later in a more interesting project.
 
 Follow [@peterohler on Twitter](http://twitter.com/#!/peterohler) for announcements and news about the OTerm gem.
 
-## <a name="build_status">Build Status</a>
+## Build Status
 
 [![Build Status](https://secure.travis-ci.org/ohler55/oterm.png?branch=master)](http://travis-ci.org/ohler55/oterm)
+
+### Current Release 1.0.2 - February 2, 2014
+
+ - Improved slow response handling.
 
 ### Current Release 1.0.1 - December 27, 2013
 
@@ -51,7 +55,7 @@ Follow [@peterohler on Twitter](http://twitter.com/#!/peterohler) for announceme
 
  - First release. There will be rough edges.
 
-## <a name="description">Description</a>
+## Description
 
 ## Examples
 
