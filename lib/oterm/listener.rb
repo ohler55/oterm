@@ -175,7 +175,9 @@ module OTerm
         history_back()
       when 21 # ^u
         @hp -= 1
+        blen = @buf.size()
         @buf = ''
+        update_cmd(blen)
       when 25 # ^y
         insert(@kill_buf)
       end
